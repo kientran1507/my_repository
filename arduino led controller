@@ -1,0 +1,66 @@
+//this is a project to control linear dimming led using arduino uno r3
+
+#include <RBDdimmer.h>
+#define USE_SERIAL  Serial
+#define STRIP1_LED 5
+#define SENSOR 8
+
+
+int stripbright1 = 0;
+int fadeSpeed1 = 50;
+int fadeSpeed2 = 40;
+int totaltime = 40;
+int power  = 0;
+dimmerLamp dimmer(STRIP1_LED);
+
+bool stillactive = false;
+
+unsigned long previousMillis = 0;         // will store last time LED was updated
+unsigned long interval = 5000;           // interval at which to wait in an ON state (milliseconds) - basically 1 minutes since last movement - change this temporarily for testing to 10000
+unsigned long currentMillis = millis();   // defining the variable - it will get set to the current time when things need to start/stop
+void setup() {
+
+  Serial.begin(9600);
+  dimmer.begin(NORMAL_MODE, ON);
+  pinMode (SENSOR, INPUT_PULLUP);
+  pinMode(STRIP1_LED, OUTPUT);
+  analogWrite(STRIP1_LED, 0);
+}
+
+void loop() {
+  TurnOn(); 
+  previousMillis = millis();
+  stillactive = true;
+  Serial.println("Motion detected");
+  do {      
+   currentMillis = millis();
+
+   if ((currentMillis - previousMillis >= interval) or (currentMillis < 5)) {
+      stillactive = false ;
+    }
+   if (digitalRead(SENSOR) == HIGH)  {
+      previousMillis = currentMillis;
+            Serial.println("sensor triggered");
+    } 
+  } while (stillactive == true);
+    Serial.println("Time finished - turning off");
+    TurnOff();
+}
+void TurnOn() {
+ for(power=5;power<=25;power+=1){
+   dimmer.setPower(power);
+     Serial.print("lampValue -> ");
+     Serial.print(dimmer.getPower());
+     Serial.println("%");
+   delay(200);
+ }
+}
+void TurnOff() {
+   for(power=25;power>=5;power-=1){
+   dimmer.setPower(power); // setPower(0-100%);
+     Serial.print("lampValue -> ");
+     Serial.print(dimmer.getPower());
+     Serial.println("%");
+   delay(200);
+  }
+}
